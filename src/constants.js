@@ -1,3 +1,3 @@
 
-export const DB_NAME = "blogDB"
+export const DB_NAME = "YTDB"
 
