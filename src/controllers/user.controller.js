@@ -195,11 +195,80 @@ const refereshAccessToken = asyncHandler(async (req,res)=> {
     }
 })
 
+
+const changeCurrentPassword = asyncHandler(async (req,res)=>{
+
+    const {oldPassword, newPassword} = req.body
+
+    const user = await User.findById(user.req._id)
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect){
+        throw new ApiError(400,"Invalid Password")
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false })
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"Password change successfully"))
+
+})
+
+
+const getCurrentUser = asyncHandler(async (req,res)=>{
+    return res
+    .status(200)
+    .json( new ApiResponse(
+        200,
+        req.user,
+        "user fetch successfully"
+    ))
+})
+
+
+const updateAccountDetails = asyncHandler(async (req,res)=>{
+    const {email, fullname, username} = req.body
+
+    if(!(email || fullname || username)){
+        throw new ApiError(400,"Feilds are required")
+    }
+
+    if(username){
+        const existingUsername = await User.findOneAndDelete({username})
+
+        if(existingUsername && existingUsername._id !== req.user._id){
+            throw new ApiError(400,"This username is already taken. Please try something new.")
+        }
+    }
+
+    const updatedFields = {}
+    if(email) updatedFields.email = email
+    if(username) updatedFields.username = username
+    if(fullname) updatedFields.fullname = fullname
+
+    const user = User.findByIdAndUpdate(
+        req.user._id,
+        { $set: updatedFields },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,user,"Account Details updated successfully"))
+})
+
+
 export {
 
     registerUser,
     loginUser,
     logoutUser,
     refereshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
     
     }
